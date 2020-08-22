@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket</title>
+
+</head>
+<body>
+<h3>线程池实时演示</h3>
+<p>【请输入要运行的任务数】：<div><input id="taskCount" name="taskCount" type="text" value="10"></div>
+<p>【操作】:<div><a onclick="openSocket()">建立连接</a></div>
+<p>【操作】：<div><a onclick="start()">开始演示</a></div>
+<p>【操作】：<div><a onclick="end()">结束演示</a></div>
+<p>【操作】：<div><a onclick="disconnect()">断开连接</a></div>
+<p>
+【线程池状态】：
+<div>
+    <a style="color: #e2a36c">排队</a><span id='queue'>-</span>
+    <a style="color: red">活动</a><span id='active'>-</span>
+    <a style="color: grey">完成</a><span id='finish'>-</span>
+    <a style="color: blue">总数</a><span id='total'>-</span>
+    <a style="color: pink">时间</a><span id='time'>-</span>
+</div>
+</p>
+</body>
+<script>
+    
+
+    var socket;
+    function openSocket() {
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        }else{
+            console.log("您的浏览器支持WebSocket");
+            //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
+            var taskCount = document.getElementById('taskCount').value;
+            // var socketUrl="ws://127.0.0.1:22599/webSocket/"+userId;
+            var socketUrl="ws://localhost:22599/webSocket/"+taskCount;
+            console.log(socketUrl);
+            if(socket!=null){
+                socket.close();
+                socket=null;
+            }
+            socket = new WebSocket(socketUrl);
+            //打开事件
+            socket.onopen = function() {
+                console.log("websocket已打开");
+                //socket.send("这是来自客户端的消息" + location.href + new Date());
+            };
+            //获得消息事件
+            socket.onmessage = function(msg) {
+                var serverMsg = "收到服务端信息：" + msg.data;
+                var msg = msg.data;
+                var prefix = msg.substr(0,7);
+                if(prefix == 'matrix='){
+                    var content = msg.substr(7);
+                    
+                    var res = content.split('|');
+
+                    if(res.length >= 5){
+                        document.getElementById('queue').innerHTML = res[0];
+                        document.getElementById('active').innerHTML = res[1];
+                        document.getElementById('finish').innerHTML = res[2];
+                        document.getElementById('total').innerHTML = res[3];
+                        document.getElementById('time').innerHTML = res[4];
+                    }
+                    
+                }
+                //发现消息进入    开始处理前端触发逻辑
+            };
+            //关闭事件
+            socket.onclose = function() {
+                console.log("websocket已关闭");
+            };
+            //发生了错误事件
+            socket.onerror = function() {
+                console.log("websocket发生了错误");
+            }
+        }
+    }
+    function start() {
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        }else {
+            socket.send("start");
+        }
+    }
+    function end() {
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        }else {
+            socket.send("end");
+        }
+    }
+
+    function disconnect() {
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        }else {
+            console.log("关闭连接！");
+            socket.send("end");
+            socket.close();
+        }
+    }
+
+    </script>
+</html>
